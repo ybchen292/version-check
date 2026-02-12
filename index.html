@@ -1,0 +1,26 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title></title>
+    <style></style>
+  </head>
+  <body>
+    <button id="openViewer">开始</button>
+    <button id="openViewer2">停止</button>
+
+    <script src="index.js"></script>
+    <script>
+      const a = new VersionCheck({
+        interval: 5000,
+      });
+      document.getElementById('openViewer').addEventListener('click', function () {
+        a.start();
+      });
+      document.getElementById('openViewer2').addEventListener('click', function () {
+        a.stop();
+      });
+    </script>
+  </body>
+</html>
