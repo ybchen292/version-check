@@ -97,7 +97,7 @@ versionCheck.check().then(hasUpdate => {
 | `message`  | `string`   | `'New version detected, refresh now?'`                 | Update prompt message, only effective when `onUpdate` is not set                                                         |
 | `onUpdate` | `Function` | `null`                                                 | Custom update callback function (higher priority than default confirm dialog)                                            |
 | `onError`  | `Function` | `(err) => console.error('Version check failed:', err)` | Error callback function, receives error object as parameter                                                              |
-| `onLog`    | `Function` | `(msg) => console.log('VersionCheck:', msg)`           | Operation log callback function, used to record normal operation information                                             |
+| `onLog`    | `Function` | `null`                                                 | Operation log callback function, used to record normal operation information                                             |
 | `storage`  | `Object`   | `null`                                                 | Custom storage configuration (requires `get`, `set`, `remove` methods), defaults to localStorage                         |
 
 ### Configuration Best Practices

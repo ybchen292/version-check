@@ -3,9 +3,11 @@
   "version": "1.1.0",
   "description": "version-check-js极简配置的前端版本检测工具，自动判断ETag/版本文件模式，默认自动轮询，保留手动检测 。原生javascript实现。不局限于框架使用",
   "main": "dist/index.js",
+  "types": "index.d.ts",
   "type": "module",
   "files": [
-    "dist"
+    "dist",
+    "index.d.ts"
   ],
   "scripts": {
     "build": "rollup -c",
@@ -34,7 +36,9 @@
     "@rollup/plugin-commonjs": "^25.0.0",
     "@rollup/plugin-node-resolve": "^15.0.0",
     "@rollup/plugin-terser": "^0.4.0",
-    "rollup": "^3.0.0"
+    "@rollup/plugin-typescript": "^12.3.0",
+    "rollup": "^3.0.0",
+    "typescript": "^5.9.3"
   },
   "volta": {
     "node": "20.16.0"

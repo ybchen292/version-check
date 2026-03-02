@@ -13,7 +13,7 @@ class VersionCheck {
    * @param {string} [options.message='检测到新版本，是否立即刷新？'] 更新提示文案
    * @param {Function} [options.onUpdate=null] 自定义更新回调（优先级高于默认confirm）
    * @param {Function} [options.onError=(err)=>console.error(err)] 错误回调
-   * @param {Function} [options.onLog=(msg)=>console.log(msg)] 日志回调
+   * @param {Function} [options.onLog=null] 日志回调
    * @param {Object} [options.storage=null] 自定义存储配置（get/set方法）
    */
   constructor(options = {}) {
@@ -23,24 +23,22 @@ class VersionCheck {
     }
 
     // 定义默认配置
-    const defaultConfig = {
+    this.config = {
       url: '/',
       interval: 10 * 60 * 1000,
       message: '检测到新版本，是否立即刷新？',
       onUpdate: null,
-      onError: err => console.error('版本检测失败：', err),
-      onLog: msg => console.log('版本检测：', msg),
+      onError: err => console.error('VersionCheck失败：', err),
+      onLog: null,
       storage: null,
+      ...options,
     };
-
-    // 合并配置并验证
-    this.config = this._mergeAndValidateConfig(defaultConfig, options);
 
     // 初始化核心状态
     this.timer = null; // 轮询定时器
     this.memoryStorage = null; // 内存存储降级
     this.storageApi = this._initStorage(); // 存储适配器
-    this.versionKey = 'version_identifier'; // 存储版本标识的key
+    this.versionKey = 'version_check_key'; // 存储版本标识的key
     this.checkMode = this._getCheckMode(); // 自动判断检测模式
     this.isRunning = false; // 检测状态
 
@@ -48,53 +46,14 @@ class VersionCheck {
   }
 
   /**
-   * 合并并验证配置项
+   * 日志输出
    * @private
-   * @param {Object} defaults 默认配置
-   * @param {Object} options 用户配置
-   * @returns {Object} 合并后的配置
+   * @param {string} message 日志信息
    */
-  _mergeAndValidateConfig(defaults, options) {
-    const config = { ...defaults, ...options };
-
-    // 验证 url
-    if (typeof config.url !== 'string' || config.url.trim() === '') {
-      throw new TypeError('url 必须是非空字符串');
+  _log(message) {
+    if (typeof this.config.onLog === 'function') {
+      this.config.onLog(message);
     }
-
-    // 验证 interval
-    if (typeof config.interval !== 'number' || config.interval <= 0) {
-      this.config?.onLog('interval 配置无效，使用默认值 5 分钟');
-      config.interval = defaults.interval;
-    }
-
-    // 验证 message
-    if (typeof config.message !== 'string' || config.message.trim() === '') {
-      this.config?.onLog('message 配置无效，使用默认值');
-      config.message = defaults.message;
-    }
-
-    // 验证回调函数
-    ['onUpdate', 'onError', 'onLog'].forEach(method => {
-      if (config[method] !== null && typeof config[method] !== 'function') {
-        this.config?.onLog(`${method} 必须是函数，使用默认处理`);
-        config[method] = defaults[method];
-      }
-    });
-
-    // 验证 storage
-    if (config.storage !== null) {
-      if (
-        typeof config.storage !== 'object' ||
-        typeof config.storage.get !== 'function' ||
-        typeof config.storage.set !== 'function'
-      ) {
-        this.config?.onLog('storage 配置无效，使用默认存储');
-        config.storage = null;
-      }
-    }
-
-    return config;
   }
 
   /**
@@ -138,7 +97,7 @@ class VersionCheck {
    */
   _pauseDetection() {
     this.stop(true);
-    this.config.onLog('页面隐藏，暂停版本检测');
+    this._log('页面隐藏，暂停VersionCheck');
   }
 
   /**
@@ -147,7 +106,7 @@ class VersionCheck {
    */
   _resumeDetection() {
     this.start();
-    this.config.onLog('页面显示，恢复版本检测');
+    this._log('页面显示，恢复VersionCheck');
   }
 
   /**
@@ -339,14 +298,17 @@ class VersionCheck {
       return;
     }
 
-    this.stop(true);
-    const isConfirm = window.confirm(message);
-    if (isConfirm) {
-      this.storageApi.set(this.versionKey, newVersion);
-      this.reload();
-    } else {
-      this.start();
-    }
+    // 检测到更新时暂停轮询
+    this.stop();
+    setTimeout(() => {
+      const isConfirm = window.confirm(message);
+      if (isConfirm) {
+        this.storageApi.set(this.versionKey, newVersion);
+        this.reload();
+      } else {
+        this.start();
+      }
+    }, 0);
   }
 
   /**
@@ -362,10 +324,20 @@ class VersionCheck {
 
   /**
    * 手动触发单次检测
+   * @param {boolean} isInternal 是否为内部调用
    * @returns {Promise<boolean>} 是否检测到更新
    */
-  async check() {
-    return this.checkMode === 'etag' ? await this._checkByEtag() : await this._checkByVersionFile();
+  async check(isInternal = false) {
+    this._log(`开始执行${isInternal ? '检测' : '手动检测'}，模式: ${this.checkMode}`);
+
+    try {
+      const hasUpdate = this.checkMode === 'etag' ? await this._checkByEtag() : await this._checkByVersionFile();
+      this._log(`${isInternal ? '检测' : '手动检测'}完成，检测到更新状态: ${hasUpdate}`);
+      return hasUpdate;
+    } catch (error) {
+      this._log(`${isInternal ? '检测' : '手动检测'}失败: ${error.message}`);
+      throw error;
+    }
   }
 
   /**
@@ -373,30 +345,27 @@ class VersionCheck {
    */
   start() {
     if (this.isRunning && this.timer) {
-      this.config.onLog('检测已在运行中');
+      this._log('VersionCheck已在运行中');
       return;
     }
 
     this.isRunning = true;
     this._clearTimer();
 
-    // 立即执行一次检测
-    // this.check().catch(error => this.config.onError(new Error(`首次检测失败: ${error.message}`)));
-
     // 启动轮询
     const poll = async () => {
       try {
-        await this.check();
+        await this.check(true);
       } catch (error) {
         this.config.onError(new Error(`轮询检测失败: ${error.message}`));
       }
-      if (this.isRunning) {
+      if (this.isRunning && this.timer) {
         this.timer = setTimeout(poll, this.config.interval);
       }
     };
     this.timer = setTimeout(poll, this.config.interval);
 
-    this.config.onLog('版本检测已启动');
+    this._log('VersionCheck已启动');
   }
 
   /**
@@ -408,8 +377,8 @@ class VersionCheck {
 
     if (!isInternal) {
       this.isRunning = false;
-      this.config.onLog('版本检测已停止');
     }
+    this._log('VersionCheck已停止');
   }
 
   /**
@@ -430,13 +399,12 @@ class VersionCheck {
     this.stop();
     this._unbindVisibilityListener();
     this.memoryStorage = null;
-    this.config = null;
     this.timer = null;
     this.storageApi = null;
     this.checkMode = null;
     this.isRunning = false;
-
-    console.log('VersionCheck 实例已销毁');
+    this._log('VersionCheck实例已销毁');
+    this.config = null;
   }
 }
 

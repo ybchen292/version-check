@@ -99,7 +99,7 @@ versionCheck.check().then(hasUpdate => {
 | `message`  | `string`   | `'检测到新版本，是否立即刷新？'`                | 更新提示文案，仅在未设置 `onUpdate` 时生效                                                       |
 | `onUpdate` | `Function` | `null`                                          | 自定义更新回调函数（优先级高于默认 confirm 弹窗）                                                |
 | `onError`  | `Function` | `(err) => console.error('版本检测失败：', err)` | 错误回调函数，接收错误对象作为参数                                                               |
-| `onLog`    | `Function` | `(msg) => console.log('版本检测：', msg)`       | 操作日志回调函数，用于记录正常操作信息                                                           |
+| `onLog`    | `Function` | `null`                                          | 操作日志回调函数，用于记录正常操作信息                                                           |
 | `storage`  | `Object`   | `null`                                          | 自定义存储配置（需提供 `get`、`set`、`remove` 方法），默认使用 localStorage                      |
 
 ### 配置项最佳实践

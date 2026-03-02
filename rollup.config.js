@@ -1,7 +1,6 @@
 import resolve from '@rollup/plugin-node-resolve';
 import commonjs from '@rollup/plugin-commonjs';
 import terser from '@rollup/plugin-terser';
-
 export default {
   input: 'index.js',
   output: [
@@ -9,12 +8,10 @@ export default {
       file: 'dist/index.js',
       format: 'umd',
       name: 'VersionCheck',
-      sourcemap: true,
     },
     {
       file: 'dist/index.esm.js',
       format: 'esm',
-      sourcemap: true,
     },
   ],
   plugins: [
@@ -50,7 +47,6 @@ export default {
         comments: false,
         ascii_only: true,
       },
-      sourceMap: true,
     }),
   ],
 };

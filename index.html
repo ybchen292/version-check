@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="zh-CN">
   <head>
     <meta charset="UTF-8" />
@@ -6,7 +6,7 @@
     <title>VersionCheck 测试页面</title>
   </head>
   <body>
-    <h1>VersionCheck.js 优化版测试</h1>
+    <h1>VersionCheck.js 测试</h1>
     <div id="status">初始化中...</div>
     <button id="manualCheck">手动检测</button>
     <button id="stopCheck">停止检测</button>
@@ -15,6 +15,10 @@
     <button id="init" disabled>生成实例</button>
     <script type="module">
       import VersionCheck from './index.js';
+
+      const time = () => {
+        return new Date().toLocaleString('zh-CN');
+      };
 
       // 创建测试实例
       const init = () => {
@@ -28,11 +32,12 @@
           },
           onLog: log => {
             console.log('日志:', log);
-            document.getElementById('status').innerHTML += `<br>日志: ${log}`;
+            document.getElementById('status').innerHTML += `<br>日志: ${log} ${time()}`;
           },
         });
       };
       let versionChecker = init();
+
       // 显示状态
       document.getElementById('status').innerHTML = `
             检测模式: ${versionChecker.checkMode}<br>
@@ -53,19 +58,16 @@
       // 停止检测按钮
       document.getElementById('stopCheck').addEventListener('click', () => {
         versionChecker.stop();
-        document.getElementById('status').innerHTML += '<br>检测已停止';
       });
 
       // 开始检测按钮
       document.getElementById('startCheck').addEventListener('click', () => {
         versionChecker.start();
-        document.getElementById('status').innerHTML += '<br>检测已开始';
       });
 
       // 销毁实例按钮
       document.getElementById('destroy').addEventListener('click', () => {
         versionChecker.destroy();
-        document.getElementById('status').innerHTML += '<br>实例已销毁';
         // 禁用所有按钮
         document.querySelectorAll('button').forEach(btn => (btn.disabled = true));
         document.querySelector('#init').disabled = false;
@@ -74,7 +76,6 @@
       // 销毁实例按钮
       document.getElementById('init').addEventListener('click', () => {
         versionChecker = init();
-        document.getElementById('status').innerHTML += '<br>实例已生成';
         // 禁用所有按钮
         document.querySelectorAll('button').forEach(btn => (btn.disabled = false));
         document.querySelector('#init').disabled = true;
