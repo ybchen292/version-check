@@ -1,26 +1,88 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="zh-CN">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title></title>
-    <style></style>
+    <title>VersionCheck 测试页面</title>
   </head>
   <body>
-    <button id="openViewer">开始</button>
-    <button id="openViewer2">停止</button>
+    <h1>VersionCheck.js 优化版测试</h1>
+    <div id="status">初始化中...</div>
+    <button id="manualCheck">手动检测</button>
+    <button id="stopCheck">停止检测</button>
+    <button id="startCheck">开始检测</button>
+    <button id="destroy">销毁实例</button>
+    <button id="init" disabled>生成实例</button>
+    <script type="module">
+      import VersionCheck from './index.js';
 
-    <script src="index.js"></script>
-    <script>
-      const a = new VersionCheck({
-        interval: 5000,
+      // 创建测试实例
+      const init = () => {
+        return new VersionCheck({
+          url: '/v.json', // 文件模式
+          interval: 5 * 1000, // 5秒轮询一次便于测试
+          message: '检测到新版本，是否刷新页面？',
+          onError: error => {
+            console.error('检测错误:', error);
+            document.getElementById('status').innerHTML += `<br>错误: ${error.message}`;
+          },
+          onLog: log => {
+            console.log('日志:', log);
+            document.getElementById('status').innerHTML += `<br>日志: ${log}`;
+          },
+        });
+      };
+      let versionChecker = init();
+      // 显示状态
+      document.getElementById('status').innerHTML = `
+            检测模式: ${versionChecker.checkMode}<br>
+            轮询间隔: ${versionChecker.config.interval}ms<br>
+            状态: ${versionChecker.isRunning ? '运行中' : '已停止'}
+        `;
+
+      // 手动检测按钮
+      document.getElementById('manualCheck').addEventListener('click', async () => {
+        try {
+          const hasUpdate = await versionChecker.check();
+          document.getElementById('status').innerHTML += `<br>手动检测完成: ${hasUpdate ? '发现更新' : '无更新'}`;
+        } catch (error) {
+          document.getElementById('status').innerHTML += `<br>手动检测失败: ${error.message}`;
+        }
       });
-      document.getElementById('openViewer').addEventListener('click', function () {
-        a.start();
+
+      // 停止检测按钮
+      document.getElementById('stopCheck').addEventListener('click', () => {
+        versionChecker.stop();
+        document.getElementById('status').innerHTML += '<br>检测已停止';
       });
-      document.getElementById('openViewer2').addEventListener('click', function () {
-        a.stop();
+
+      // 开始检测按钮
+      document.getElementById('startCheck').addEventListener('click', () => {
+        versionChecker.start();
+        document.getElementById('status').innerHTML += '<br>检测已开始';
       });
+
+      // 销毁实例按钮
+      document.getElementById('destroy').addEventListener('click', () => {
+        versionChecker.destroy();
+        document.getElementById('status').innerHTML += '<br>实例已销毁';
+        // 禁用所有按钮
+        document.querySelectorAll('button').forEach(btn => (btn.disabled = true));
+        document.querySelector('#init').disabled = false;
+      });
+
+      // 销毁实例按钮
+      document.getElementById('init').addEventListener('click', () => {
+        versionChecker = init();
+        document.getElementById('status').innerHTML += '<br>实例已生成';
+        // 禁用所有按钮
+        document.querySelectorAll('button').forEach(btn => (btn.disabled = false));
+        document.querySelector('#init').disabled = true;
+        document.getElementById('startCheck').click();
+      });
+
+      // 自动开始检测
+      versionChecker.start();
     </script>
   </body>
 </html>

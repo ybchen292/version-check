@@ -1,6 +1,6 @@
 import resolve from '@rollup/plugin-node-resolve';
 import commonjs from '@rollup/plugin-commonjs';
-import { terser } from 'rollup-plugin-terser';
+import terser from '@rollup/plugin-terser';
 
 export default {
   input: 'index.js',
@@ -8,14 +8,23 @@ export default {
     {
       file: 'dist/index.js',
       format: 'umd',
-      name: 'ImagesViewer',
+      name: 'VersionCheck',
+      sourcemap: true,
+    },
+    {
+      file: 'dist/index.esm.js',
+      format: 'esm',
+      sourcemap: true,
     },
   ],
   plugins: [
     resolve({
       browser: true,
+      preferBuiltins: false,
     }),
-    commonjs(),
+    commonjs({
+      include: 'node_modules/**',
+    }),
     terser({
       compress: {
         drop_console: true,
@@ -39,7 +48,9 @@ export default {
       },
       output: {
         comments: false,
+        ascii_only: true,
       },
+      sourceMap: true,
     }),
   ],
 };
