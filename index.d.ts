@@ -46,6 +46,9 @@ export interface VersionCheckOptions {
 
   /** 自定义存储配置 */
   storage?: VersionCheckStorageAdapter;
+
+  /** 重新加载时的时间戳参数名，默认't' */
+  t?: string;
 }
 
 /**

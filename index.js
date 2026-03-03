@@ -8,13 +8,14 @@ class VersionCheck {
   /**
    * 构造函数：初始化配置和存储（极简配置）
    * @param {Object} options 配置项
-   * @param {string} [options.url='/'] 检测地址（默认/：ETag模式；传文件路径如/version.json：版本文件模式）
-   * @param {number} [options.interval=10 * 60 * 1000] 轮询间隔（毫秒），默认10分钟
+   * @param {string} [options.url='/'] 检测地址（默认/：ETag 模式；传文件路径如/version.json：版本文件模式）
+   * @param {number} [options.interval=10 * 60 * 1000] 轮询间隔（毫秒），默认 10 分钟
    * @param {string} [options.message='检测到新版本，是否立即刷新？'] 更新提示文案
-   * @param {Function} [options.onUpdate=null] 自定义更新回调（优先级高于默认confirm）
+   * @param {Function} [options.onUpdate=null] 自定义更新回调（优先级高于默认 confirm）
    * @param {Function} [options.onError=(err)=>console.error(err)] 错误回调
    * @param {Function} [options.onLog=null] 日志回调
-   * @param {Object} [options.storage=null] 自定义存储配置（get/set方法）
+   * @param {Object} [options.storage=null] 自定义存储配置（get/set 方法）
+   * @param {string} [options.t='t'] 重新加载时的时间戳参数名，默认't'
    */
   constructor(options = {}) {
     // 验证输入参数类型
@@ -28,9 +29,10 @@ class VersionCheck {
       interval: 10 * 60 * 1000,
       message: '检测到新版本，是否立即刷新？',
       onUpdate: null,
-      onError: err => console.error('VersionCheck失败：', err),
+      onError: err => console.error('VersionCheck 失败：', err),
       onLog: null,
       storage: null,
+      t: 't',
       ...options,
     };
 
@@ -316,9 +318,10 @@ class VersionCheck {
    */
   reload() {
     let currentUrl = window.location.href;
-    currentUrl = currentUrl.replace(/[?&]t=\d+/g, '');
+    const param = this.config.t;
+    currentUrl = currentUrl.replace(new RegExp(`[?&]${param}=\\d+`, 'g'), '');
     const separator = currentUrl.includes('?') ? '&' : '?';
-    const newUrl = `${currentUrl}${separator}t=${Date.now()}`;
+    const newUrl = `${currentUrl}${separator}${param}=${Date.now()}`;
     window.location.replace(newUrl);
   }
 

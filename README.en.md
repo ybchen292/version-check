@@ -99,6 +99,7 @@ versionCheck.check().then(hasUpdate => {
 | `onError`  | `Function` | `(err) => console.error('Version check failed:', err)` | Error callback function, receives error object as parameter                                                              |
 | `onLog`    | `Function` | `null`                                                 | Operation log callback function, used to record normal operation information                                             |
 | `storage`  | `Object`   | `null`                                                 | Custom storage configuration (requires `get`, `set`, `remove` methods), defaults to localStorage                         |
+| `t`        | `string`   | `t`                                                    | The timestamp parameter name when reloading                                                                              |
 
 ### Configuration Best Practices
 
@@ -232,7 +233,7 @@ axios.interceptors.request.use(
   },
   error => {
     return Promise.reject(error);
-  }
+  },
 );
 
 versionCheck.start();
@@ -268,7 +269,7 @@ axios.interceptors.request.use(
   },
   error => {
     return Promise.reject(error);
-  }
+  },
 );
 
 versionCheck.start();

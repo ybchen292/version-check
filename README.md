@@ -101,6 +101,7 @@ versionCheck.check().then(hasUpdate => {
 | `onError`  | `Function` | `(err) => console.error('版本检测失败：', err)` | 错误回调函数，接收错误对象作为参数                                                               |
 | `onLog`    | `Function` | `null`                                          | 操作日志回调函数，用于记录正常操作信息                                                           |
 | `storage`  | `Object`   | `null`                                          | 自定义存储配置（需提供 `get`、`set`、`remove` 方法），默认使用 localStorage                      |
+| `t`        | `string`   | `t`                                             | 重新加载时的时间戳参数名                                                                         |
 
 ### 配置项最佳实践
 
@@ -239,7 +240,7 @@ axios.interceptors.request.use(
   },
   error => {
     return Promise.reject(error);
-  }
+  },
 );
 
 versionCheck.start();
