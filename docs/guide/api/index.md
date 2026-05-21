@@ -16,33 +16,43 @@ const versionCheck = new VersionCheck({
   onUpdate: () => {
     // 自定义更新回调
   },
-  onError: (err) => {
+  onError: err => {
     // 错误回调
   },
-  onLog: (message) => {
+  onLog: message => {
     // 日志回调
   },
   storage: {
     // 自定义存储
-    get: (key) => { /* 实现 */ },
-    set: (key, value) => { /* 实现 */ }
+    get: key => {
+      /* 实现 */
+    },
+    set: (key, value) => {
+      /* 实现 */
+    },
   },
-  t: 't'
+  t: 't',
+  versionKey: 'version_check_key',
+  initialCheck: true,
+  bindVisibility: true,
 });
 ```
 
 ## 配置参数
 
-| 参数 | 类型 | 默认值 | 描述 |
-|------|------|--------|------|
-| url | string | '/' | 检测地址（默认/：ETag 模式；传文件路径如/version.json：版本文件模式） |
-| interval | number | 10 * 60 * 1000 | 轮询间隔（毫秒），默认 10 分钟 |
-| message | string | '检测到新版本，是否立即刷新？' | 更新提示文案 |
-| onUpdate | Function | null | 自定义更新回调（优先级高于默认 confirm） |
-| onError | Function | (err)=>console.error(err) | 错误回调 |
-| onLog | Function | null | 日志回调 |
-| storage | Object | null | 自定义存储配置（get/set 方法） |
-| t | string | 't' | 重新加载时的时间戳参数名，默认't' |
+| 参数           | 类型     | 默认值                       | 描述                                                                                                             |
+| -------------- | -------- | ---------------------------- | ---------------------------------------------------------------------------------------------------------------- |
+| url            | string   | /                            | 检测地址（默认/：ETag 模式；传文件路径如/version.json：版本文件模式）                                            |
+| interval       | number   | 10 _ 60 _ 1000               | 轮询间隔（毫秒），默认 10 分钟                                                                                   |
+| message        | string   | 检测到新版本，是否立即刷新？ | 更新提示文案                                                                                                     |
+| onUpdate       | Function | null                         | 自定义更新回调（优先级高于默认 confirm）                                                                         |
+| onError        | Function | (err)=>console.error(err)    | 错误回调                                                                                                         |
+| onLog          | Function | null                         | 日志回调                                                                                                         |
+| storage        | Object   | null                         | 自定义存储配置（get/set 方法）                                                                                   |
+| t              | string   | t                            | 重新加载时的时间戳参数名，默认't'                                                                                |
+| versionKey     | string   | version_check_key            | 用于在 `localStorage` 中缓存版本标识的键名                                                                       |
+| initialCheck   | boolean  | true                         | 是否在执行start方法时立即执行一次版本比对，而非等待首个轮询间隔(为true时,页面可见性变化显示时会执行一次版本检测) |
+| bindVisibility | boolean  | true                         | 是否自动监听页面可见性变化：页面隐藏时暂停轮询，显示时自动恢复，节省性能与网络开销                               |
 
 ## 检测模式
 

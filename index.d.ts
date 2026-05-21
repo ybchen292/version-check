@@ -49,6 +49,17 @@ export interface VersionCheckOptions {
 
   /** 重新加载时的时间戳参数名，默认't' */
   t?: string;
+
+  /** 是否在调用start时自动检测版本 */
+  initialCheck?: boolean;
+
+  /** 是否在页面可见时自动检测版本 */
+
+  bindVisibility?: boolean;
+
+  /** 版本标识的存储键，默认'version_check_key' */
+
+  versionKey?: string;
 }
 
 /**

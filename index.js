@@ -2,7 +2,7 @@
  * 通用前端版本检测工具
  * 自动判断检测模式（ETag/版本文件）| 默认自动轮询 | 保留手动检测 | 内置原生confirm提示
  * @module version-check-js
- * @version 1.1.0
+ * @version 1.1.4
  */
 class VersionCheck {
   /**
@@ -16,6 +16,9 @@ class VersionCheck {
    * @param {Function} [options.onLog=null] 日志回调
    * @param {Object} [options.storage=null] 自定义存储配置（get/set 方法）
    * @param {string} [options.t='t'] 重新加载时的时间戳参数名，默认't'
+   * @param {string} [options.versionKey='version_check_key'] 存储版本标识的key
+   * @param {boolean} [options.initialCheck=true] 启动时是否立即执行一次检测
+   * @param {boolean} [options.bindVisibility=true] 是否绑定页面可见性变化监听
    */
   constructor(options = {}) {
     // 验证输入参数类型
@@ -33,6 +36,9 @@ class VersionCheck {
       onLog: null,
       storage: null,
       t: 't',
+      versionKey: 'version_check_key',
+      initialCheck: true,
+      bindVisibility: true,
       ...options,
     };
 
@@ -40,11 +46,13 @@ class VersionCheck {
     this.timer = null; // 轮询定时器
     this.memoryStorage = null; // 内存存储降级
     this.storageApi = this._initStorage(); // 存储适配器
-    this.versionKey = 'version_check_key'; // 存储版本标识的key
+    this.versionKey = this.config.versionKey; // 存储版本标识的key
     this.checkMode = this._getCheckMode(); // 自动判断检测模式
     this.isRunning = false; // 检测状态
 
-    this._bindVisibilityListener(); // 绑定可见性变化监听器
+    if (this.config.bindVisibility) {
+      this._bindVisibilityListener(); // 绑定可见性变化监听器
+    }
   }
 
   /**
@@ -301,7 +309,7 @@ class VersionCheck {
     }
 
     // 检测到更新时暂停轮询
-    this.stop();
+    this.stop(true);
     setTimeout(() => {
       const isConfirm = window.confirm(message);
       if (isConfirm) {
@@ -366,14 +374,19 @@ class VersionCheck {
         this.timer = setTimeout(poll, this.config.interval);
       }
     };
-    this.timer = setTimeout(poll, this.config.interval);
+
+    if (this.config.initialCheck) {
+      this.timer = setTimeout(poll, 0);
+    } else {
+      this.timer = setTimeout(poll, this.config.interval);
+    }
 
     this._log('VersionCheck已启动');
   }
 
   /**
    * 停止自动轮询检测
-   * @param {boolean} isInternal 是否为内部调用
+   * @param {boolean} isInternal 是否为内部调用。用来区分是外部停止还是页面隐藏时停止的
    */
   stop(isInternal = false) {
     this._clearTimer();
