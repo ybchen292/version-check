@@ -92,16 +92,19 @@ versionCheck.check().then(hasUpdate => {
 
 ## ⚙️ 配置项详解
 
-| 参数名     | 类型       | 默认值                                          | 描述                                                                                             |
-| ---------- | ---------- | ----------------------------------------------- | ------------------------------------------------------------------------------------------------ |
-| `url`      | `string`   | `'/'`                                           | 检测地址：<br>- 默认 `'/'`：启用 ETag 模式<br>- 文件路径（如 `/version.json`）：启用版本文件模式 |
-| `interval` | `number`   | `10 * 60 * 1000`（10 分钟）                     | 轮询检测间隔时间（毫秒），建议不小于 30 秒                                                       |
-| `message`  | `string`   | `'检测到新版本，是否立即刷新？'`                | 更新提示文案，仅在未设置 `onUpdate` 时生效                                                       |
-| `onUpdate` | `Function` | `null`                                          | 自定义更新回调函数（优先级高于默认 confirm 弹窗）                                                |
-| `onError`  | `Function` | `(err) => console.error('版本检测失败：', err)` | 错误回调函数，接收错误对象作为参数                                                               |
-| `onLog`    | `Function` | `null`                                          | 操作日志回调函数，用于记录正常操作信息                                                           |
-| `storage`  | `Object`   | `null`                                          | 自定义存储配置（需提供 `get`、`set` 方法），默认使用 localStorage                                |
-| `t`        | `string`   | `t`                                             | 重新加载时的时间戳参数名                                                                         |
+| 参数名         | 类型     | 默认值                                        | 描述                                                                                                             |
+| -------------- | -------- | --------------------------------------------- | ---------------------------------------------------------------------------------------------------------------- |
+| url            | string   | /                                             | 检测地址：<br>- 默认 `'/'`：启用 ETag 模式<br>- 文件路径（如 `/version.json`）：启用版本文件模式                 |
+| interval       | number   | `10 * 60 * 1000`（10 分钟）                   | 轮询检测间隔时间（毫秒），建议不小于 30 秒                                                                       |
+| message        | string   | 检测到新版本，是否立即刷新？                  | 更新提示文案，仅在未设置 `onUpdate` 时生效                                                                       |
+| onUpdate       | Function | null                                          | 自定义更新回调函数（优先级高于默认 confirm 弹窗）                                                                |
+| onError        | Function | (err) => console.error('版本检测失败：', err) | 错误回调函数，接收错误对象作为参数                                                                               |
+| onLog          | Function | null                                          | 操作日志回调函数，用于记录正常操作信息                                                                           |
+| storage        | Object   | null                                          | 自定义存储配置（需提供 `get`、`set` 方法），默认使用 localStorage                                                |
+| t              | string   | t                                             | 重新加载时的时间戳参数名                                                                                         |
+| versionKey     | string   | version_check_key                             | 用于在 `localStorage` 中缓存版本标识的键名                                                                       |
+| initialCheck   | boolean  | true                                          | 是否在执行start方法时立即执行一次版本比对，而非等待首个轮询间隔(为true时,页面可见性变化显示时会执行一次版本检测) |
+| bindVisibility | boolean  | true                                          | 是否自动监听页面可见性变化：页面隐藏时暂停轮询，显示时自动恢复，节省性能与网络开销                               |
 
 ### 配置项最佳实践
 

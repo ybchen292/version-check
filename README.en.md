@@ -90,16 +90,19 @@ versionCheck.check().then(hasUpdate => {
 
 ## ⚙️ Configuration Options Detailed
 
-| Parameter  | Type       | Default Value                                          | Description                                                                                                              |
-| ---------- | ---------- | ------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------ |
-| `url`      | `string`   | `'/'`                                                  | Detection address:<br>- Default `'/'`: Enable ETag mode<br>- File path (e.g., `/version.json`): Enable version file mode |
-| `interval` | `number`   | `10 * 60 * 1000` (10 minutes)                          | Polling detection interval (milliseconds), recommended not less than 30 seconds                                          |
-| `message`  | `string`   | `'New version detected, refresh now?'`                 | Update prompt message, only effective when `onUpdate` is not set                                                         |
-| `onUpdate` | `Function` | `null`                                                 | Custom update callback function (higher priority than default confirm dialog)                                            |
-| `onError`  | `Function` | `(err) => console.error('Version check failed:', err)` | Error callback function, receives error object as parameter                                                              |
-| `onLog`    | `Function` | `null`                                                 | Operation log callback function, used to record normal operation information                                             |
-| `storage`  | `Object`   | `null`                                                 | Custom storage configuration (requires `get`, `set` methods), defaults to localStorage                                   |
-| `t`        | `string`   | `t`                                                    | The timestamp parameter name when reloading                                                                              |
+| Parameter      | Type     | Default                      | Description                                                                                                     |
+| -------------- | -------- | ---------------------------- | --------------------------------------------------------------------------------------------------------------- |
+| url            | string   | /                            | Detection URL (default '/': ETag mode; pass file path like '/version.json': version file mode)                  |
+| interval       | number   | `10 * 60 * 1000`             | Polling interval (milliseconds), default 10 minutes                                                             |
+| message        | string   | 检测到新版本，是否立即刷新？ | Update prompt message                                                                                           |
+| onUpdate       | Function | null                         | Custom update callback (priority over default confirm)                                                          |
+| onError        | Function | (err)=>console.error(err)    | Error callback                                                                                                  |
+| onLog          | Function | null                         | Log callback                                                                                                    |
+| storage        | Object   | null                         | Custom storage configuration (get/set methods)                                                                  |
+| t              | string   | t                            | Timestamp parameter name when reloading, default 't'                                                            |
+| versionKey     | string   | version_check_key            | Key used to store the version identifier, customizable for different projects/environments                      |
+| initialCheck   | boolean  | true                         | Whether to run a version check immediately when `start()` is called (instead of waiting for the first interval) |
+| bindVisibility | boolean  | true                         | Whether to bind the page visibility listener (pauses polling when hidden, automatically resumes when visible)   |
 
 ### Configuration Best Practices
 

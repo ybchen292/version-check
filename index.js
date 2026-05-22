@@ -2,7 +2,7 @@
  * 通用前端版本检测工具
  * 自动判断检测模式（ETag/版本文件）| 默认自动轮询 | 保留手动检测 | 内置原生confirm提示
  * @module version-check-js
- * @version 1.1.4
+ * @version 1.1.5
  */
 class VersionCheck {
   /**
