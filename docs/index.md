@@ -48,20 +48,21 @@ Version Check JS 是一个功能强大、轻量级的前端版本检测工具，
 ## 几分钟内开始使用
 
 ```javascript
-// 简单使用
+// 简单使用 etag 模式
 const versionCheck = new VersionCheck();
 versionCheck.start();
 
-// 高级配置
+// 简单使用 版本文件模式
 const versionCheck = new VersionCheck({
   url: '/version.json',
   interval: 5 * 60 * 1000,
   message: '发现新版本，是否立即更新？',
-  onUpdate: () => {
-    if (confirm('发现新版本，是否立即更新？')) {
-      versionCheck.reload();
-    }
-  }
+  // 自定义回调函数.需要自定义弹框提示时。或不要弹框提示时
+  // onUpdate: () => {
+  //   if (confirm('发现新版本，是否立即更新？')) {
+  //     versionCheck.reload();
+  //   }
+  // }
 });
 versionCheck.start();
 ```

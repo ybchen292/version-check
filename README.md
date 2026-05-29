@@ -94,10 +94,10 @@ versionCheck.check().then(hasUpdate => {
 
 | 参数名         | 类型     | 默认值                                        | 描述                                                                                                             |
 | -------------- | -------- | --------------------------------------------- | ---------------------------------------------------------------------------------------------------------------- |
-| url            | string   | /                                             | 检测地址：<br>- 默认 `'/'`：启用 ETag 模式<br>- 文件路径（如 `/version.json`）：启用版本文件模式                 |
+| url            | string   | /                                             | 检测地址（默认/：ETag 模式；传文件路径如/version.json：版本文件模式。如vue中放在public目录下，需要传/version.json。也可以传入接口地址，通过get请求或者自定义请求(fetchRequest)获取版本号）                 |
 | interval       | number   | `10 * 60 * 1000`（10 分钟）                   | 轮询检测间隔时间（毫秒），建议不小于 30 秒                                                                       |
 | message        | string   | 检测到新版本，是否立即刷新？                  | 更新提示文案，仅在未设置 `onUpdate` 时生效                                                                       |
-| onUpdate       | Function | null                                          | 自定义更新回调函数（优先级高于默认 confirm 弹窗）                                                                |
+| onUpdate       | Function | null                                          | 自定义更新回调（优先级高于默认 confirm。传入后message无效。当需要自定义弹框提示或无需弹框提示时需要用的此方法）                                                                |
 | onError        | Function | (err) => console.error('版本检测失败：', err) | 错误回调函数，接收错误对象作为参数                                                                               |
 | onLog          | Function | null                                          | 操作日志回调函数，用于记录正常操作信息                                                                           |
 | storage        | Object   | null                                          | 自定义存储配置（需提供 `get`、`set` 方法），默认使用 localStorage                                                |
@@ -105,6 +105,8 @@ versionCheck.check().then(hasUpdate => {
 | versionKey     | string   | version_check_key                             | 用于在 `localStorage` 中缓存版本标识的键名                                                                       |
 | initialCheck   | boolean  | true                                          | 是否在执行start方法时立即执行一次版本比对，而非等待首个轮询间隔(为true时,页面可见性变化显示时会执行一次版本检测) |
 | bindVisibility | boolean  | true                                          | 是否自动监听页面可见性变化：页面隐藏时暂停轮询，显示时自动恢复，节省性能与网络开销                               |
+| fetchRequest          | Function | null                         | 自定义请求函数，优先级高于内部fetch实现(需要返回Promise对象。返回值为版本号)                                                                                             |
+| fetchOptions        | Object   | {}                           | 自定义fetch选项，优先级高于默认值（当通过接口请求url时需要传入token时可在此处传入。或者使用其他自定义header时可在此处传入。也可以使用fetchRequest）                                                                                             |
 
 ### 配置项最佳实践
 
@@ -122,7 +124,7 @@ const versionCheck = new VersionCheck({
     // 自定义更新逻辑
     console.log('执行更新...');
     // 可以在这里添加动画、提示等
-    window.location.reload();
+    versionCheck.reload();
   },
 
   // 错误处理
@@ -223,8 +225,17 @@ import axios from 'axios';
 import VersionCheck from 'version-check-js';
 
 const versionCheck = new VersionCheck({
-  url: '/api/version',
+  url: '/version.json', // Recommended to use specific API interface
   interval: 300000,
+  // fetchOptions: {
+  //   headers: {
+  //     'Authorization': 'Bearer ' + localStorage.getItem('token'),
+  //   },
+  // },
+  // fetchRequest: async (url, options) => {
+  //   const response = await axios(url, options);
+  //   return response.version;
+  // },
 });
 
 // 请求拦截器中进行版本检测

@@ -48,6 +48,21 @@ export interface VersionCheckOptions {
 
   /** Timestamp parameter name when reloading, default 't' */
   t?: string;
+
+  /** Version key in the response JSON, default 'version_check_key' */
+  versionKey?: string;
+
+  /** Whether to perform version comparison immediately when executing the start method, default to true */
+  initialCheck?: boolean;
+
+  /** Whether to bind visibility change event, default to true */
+  bindVisibility?: boolean;
+
+  /** Custom request function (priority over internal fetch implementation. Returns a Promise object with the version identifier as the value) */
+  fetchRequest?: (url: string, options?: any | null) => Promise<string | null>;
+
+  /** Custom fetch options (priority over default values) */
+  fetchOptions?: any | null;
 }
 ```
 

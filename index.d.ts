@@ -50,16 +50,20 @@ export interface VersionCheckOptions {
   /** 重新加载时的时间戳参数名，默认't' */
   t?: string;
 
-  /** 是否在调用start时自动检测版本 */
+  /** 是否在调用start时自动检测版本，默认true */
   initialCheck?: boolean;
 
-  /** 是否在页面可见时自动检测版本 */
-
+  /** 是否在页面可见时自动检测版本，默认true */
   bindVisibility?: boolean;
 
   /** 版本标识的存储键，默认'version_check_key' */
-
   versionKey?: string;
+
+  /** 自定义请求函数，优先级高于内部fetch实现 */
+  fetchRequest?: (url: string, options?: any | null) => Promise<string | null>;
+
+  /** 自定义fetch选项（优先级高于默认值） */
+  fetchOptions?: any | null;
 }
 
 /**

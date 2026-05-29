@@ -92,10 +92,10 @@ versionCheck.check().then(hasUpdate => {
 
 | Parameter      | Type     | Default                      | Description                                                                                                     |
 | -------------- | -------- | ---------------------------- | --------------------------------------------------------------------------------------------------------------- |
-| url            | string   | /                            | Detection URL (default '/': ETag mode; pass file path like '/version.json': version file mode)                  |
+| url            | string   | /                            | Detection URL (default '/': ETag mode; pass file path like '/version.json': version file mode. Can also be an API endpoint or custom request function (fetchRequest)                    |
 | interval       | number   | `10 * 60 * 1000`             | Polling interval (milliseconds), default 10 minutes                                                             |
 | message        | string   | 检测到新版本，是否立即刷新？ | Update prompt message                                                                                           |
-| onUpdate       | Function | null                         | Custom update callback (priority over default confirm)                                                          |
+| onUpdate       | Function | null                         | Custom update callback (priority over default confirm. Pass in to disable the default prompt and use this method instead. When you need to customize the prompt or disable the prompt altogether)                                                          |
 | onError        | Function | (err)=>console.error(err)    | Error callback                                                                                                  |
 | onLog          | Function | null                         | Log callback                                                                                                    |
 | storage        | Object   | null                         | Custom storage configuration (get/set methods)                                                                  |
@@ -103,6 +103,8 @@ versionCheck.check().then(hasUpdate => {
 | versionKey     | string   | version_check_key            | Key used to store the version identifier, customizable for different projects/environments                      |
 | initialCheck   | boolean  | true                         | Whether to run a version check immediately when `start()` is called (instead of waiting for the first interval) |
 | bindVisibility | boolean  | true                         | Whether to bind the page visibility listener (pauses polling when hidden, automatically resumes when visible)   |
+| fetchRequest   | Function | null                         | Custom request function (priority over internal fetch implementation, returns string version identifier)   |
+| fetchOptions   | Object   | {}                           | Custom fetch options (priority over default values) (when using fetchRequest) |
 
 ### Configuration Best Practices
 
@@ -120,7 +122,7 @@ const versionCheck = new VersionCheck({
     // Custom update logic
     console.log('Executing update...');
     // Can add animations, notifications, etc.
-    window.location.reload();
+    versionCheck.reload();
   },
 
   // Error handling
@@ -252,8 +254,17 @@ import axios from 'axios';
 import VersionCheck from 'version-check-js';
 
 const versionCheck = new VersionCheck({
-  url: '/api/version',
+  url: '/version.json', // Recommended to use specific API interface
   interval: 300000,
+  // fetchOptions: {
+  //   headers: {
+  //     'Authorization': 'Bearer ' + localStorage.getItem('token'),
+  //   },
+  // },
+  // fetchRequest: async (url, options) => {
+  //   const response = await axios(url, options);
+  //   return response.version;
+  // },
 });
 
 // Perform version check in request interceptor

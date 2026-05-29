@@ -2,7 +2,7 @@
  * 通用前端版本检测工具
  * 自动判断检测模式（ETag/版本文件）| 默认自动轮询 | 保留手动检测 | 内置原生confirm提示
  * @module version-check-js
- * @version 1.1.5
+ * @version 1.1.6
  */
 class VersionCheck {
   /**
@@ -19,6 +19,8 @@ class VersionCheck {
    * @param {string} [options.versionKey='version_check_key'] 存储版本标识的key
    * @param {boolean} [options.initialCheck=true] 启动时是否立即执行一次检测
    * @param {boolean} [options.bindVisibility=true] 是否绑定页面可见性变化监听
+   * @param {Function} [options.fetchRequest=null] 自定义请求函数，优先级高于内部fetch实现
+   * @param {Object} [options.fetchOptions={}] 自定义fetch选项，优先级高于默认值
    */
   constructor(options = {}) {
     // 验证输入参数类型
@@ -211,22 +213,27 @@ class VersionCheck {
    * @returns {Promise<boolean>} 是否检测到更新
    */
   async _checkByEtag() {
-    const { url } = this.config;
+    const { url, fetchRequest, fetchOptions } = this.config;
 
     try {
-      const response = await this._fetchRequest(url, {
+      const options = {
         method: 'HEAD',
         cache: 'no-cache',
         credentials: 'same-origin',
-      });
+        ...fetchOptions,
+      };
+      let newVersion = null;
+      if (typeof fetchRequest === 'function') {
+        newVersion = await fetchRequest(url, options);
+      } else {
+        const response = await this._fetchRequest(url, options);
 
-      if (!response.ok) {
-        throw new Error(`ETag 请求失败，状态码：${response.status}`);
-      }
+        if (!response.ok) {
+          throw new Error(`ETag 请求失败，状态码：${response.status}`);
+        }
 
-      const newVersion = response.headers.get('ETag');
-      if (!newVersion) {
-        throw new Error('服务器未返回 ETag，检测失败');
+        newVersion = response.headers.get('ETag');
+        if (!newVersion) throw new Error('服务器未返回 ETag，检测失败');
       }
 
       return this._compareVersion(newVersion);
@@ -242,33 +249,36 @@ class VersionCheck {
    * @returns {Promise<boolean>} 是否检测到更新
    */
   async _checkByVersionFile() {
-    const { url } = this.config;
-
+    const { url, fetchRequest, fetchOptions } = this.config;
+    const options = {
+      method: 'GET',
+      cache: 'no-cache',
+      credentials: 'same-origin',
+      headers: {
+        Accept: 'application/json',
+      },
+      ...fetchOptions,
+    };
+    let newVersion = null;
     try {
-      const response = await this._fetchRequest(url, {
-        method: 'GET',
-        cache: 'no-cache',
-        credentials: 'same-origin',
-        headers: {
-          Accept: 'application/json',
-        },
-      });
+      if (typeof fetchRequest === 'function') {
+        newVersion = await fetchRequest(url, options);
+      } else {
+        const response = await this._fetchRequest(url, options);
 
-      if (!response.ok) {
-        throw new Error(`版本文件请求失败，状态码：${response.status}`);
+        if (!response.ok) {
+          throw new Error(`版本文件请求失败，状态码：${response.status}`);
+        }
+
+        const result = await response.json();
+
+        if (!result || typeof result !== 'object') {
+          throw new Error('版本文件格式错误，必须返回对象');
+        }
+        newVersion = result.version;
+        if (!newVersion) throw new Error('版本文件格式错误，缺少 version 字段');
       }
-
-      const result = await response.json();
-
-      if (!result || typeof result !== 'object') {
-        throw new Error('版本文件格式错误，必须返回对象');
-      }
-
-      if (!result.version) {
-        throw new Error('版本文件格式错误，缺少 version 字段');
-      }
-
-      return this._compareVersion(result.version);
+      return this._compareVersion(newVersion);
     } catch (error) {
       this.config.onError(error);
       return false;

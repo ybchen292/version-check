@@ -48,6 +48,21 @@ export interface VersionCheckOptions {
 
   /** 重新加载时的时间戳参数名，默认't' */
   t?: string;
+
+  /** 版本键名，默认'version_check_key' */
+  versionKey?: string;
+
+  /** 是否在执行start方法时立即执行一次版本比对，默认true */
+  initialCheck?: boolean;
+
+  /** 是否绑定visibilitychange事件，默认true */
+  bindVisibility?: boolean;
+
+  /** 自定义请求函数（优先级高于内部fetch实现，返回Promise对象，值为版本标识） */
+  fetchRequest?: (url: string, options?: any | null) => Promise<string | null>;
+
+  /** 自定义fetch选项（优先级高于默认值） */
+  fetchOptions?: any | null;
 }
 ```
 

@@ -35,6 +35,15 @@ const versionCheck = new VersionCheck({
   versionKey: 'version_check_key',
   initialCheck: true,
   bindVisibility: true,
+  // fetchOptions: {
+  //   headers: {
+  //     'Authorization': 'Bearer ' + localStorage.getItem('token'),
+  //   },
+  // },
+  // fetchRequest: async (url, options) => {
+  //   const response = await axios(url, options);
+  //   return response.version;
+  // },
 });
 ```
 
@@ -42,10 +51,10 @@ const versionCheck = new VersionCheck({
 
 | Parameter      | Type     | Default                      | Description                                                                                                     |
 | -------------- | -------- | ---------------------------- | --------------------------------------------------------------------------------------------------------------- |
-| url            | string   | /                            | Detection URL (default '/': ETag mode; pass file path like '/version.json': version file mode)                  |
+| url            | string   | /                            | Detection URL (default '/': ETag mode; pass file path like '/version.json': version file mode. Can also be an API endpoint or custom request function (fetchRequest)                  |
 | interval       | number   | `10 * 60 * 1000`             | Polling interval (milliseconds), default 10 minutes                                                             |
-| message        | string   | 检测到新版本，是否立即刷新？ | Update prompt message                                                                                           |
-| onUpdate       | Function | null                         | Custom update callback (priority over default confirm)                                                          |
+| message        | string   | 'New version detected, update now?' | Update prompt message                                                                                           |
+| onUpdate       | Function | null                         | Custom update callback (priority over default confirm. Pass in to disable the default prompt and use this method instead. When you need to customize the prompt or disable the prompt altogether)                                                          |
 | onError        | Function | (err)=>console.error(err)    | Error callback                                                                                                  |
 | onLog          | Function | null                         | Log callback                                                                                                    |
 | storage        | Object   | null                         | Custom storage configuration (get/set methods)                                                                  |
@@ -53,6 +62,9 @@ const versionCheck = new VersionCheck({
 | versionKey     | string   | version_check_key            | Key used to store the version identifier, customizable for different projects/environments                      |
 | initialCheck   | boolean  | true                         | Whether to run a version check immediately when `start()` is called (instead of waiting for the first interval) |
 | bindVisibility | boolean  | true                         | Whether to bind the page visibility listener (pauses polling when hidden, automatically resumes when visible)   |
+| fetchRequest          | Function | null                         | Custom request function (priority over internal fetch implementation. Returns a Promise object with the version identifier as the value)                                                                                             |
+| fetchOptions        | Object   | {}                           | Custom fetch options (priority over default values)                                                                                             |
+
 
 ## Detection Modes
 
