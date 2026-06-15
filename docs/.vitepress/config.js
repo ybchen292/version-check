@@ -102,6 +102,10 @@ export default {
               text: '类型定义',
               link: '/guide/api/types',
             },
+            {
+              text: '插件',
+              link: '/guide/api/plugin',
+            },
           ],
         },
       ],
@@ -129,6 +133,10 @@ export default {
             {
               text: 'Type Definitions',
               link: '/en/guide/api/types',
+            },
+            {
+              text: 'Plugin',
+              link: '/en/guide/api/plugin',
             },
           ],
         },

@@ -34,7 +34,7 @@ features:
 
 ## What is Version Check JS?
 
-Version Check JS is a powerful, lightweight frontend version detection tool built with native JavaScript. It provides rich functionality for detecting version changes in frontend applications, including auto-polling, manual detection, custom callbacks, and more.
+Version Check JS is a powerful, lightweight frontend version detection tool built with native JavaScript. It provides rich functionality for detecting version changes in frontend applications, including auto-polling, manual detection, custom callbacks, auto-generated version files, format options<Badge  text="v2.0.0+" />, and more.
 
 ## Key Advantages
 

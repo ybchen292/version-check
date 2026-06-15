@@ -87,6 +87,60 @@ versionCheck.check().then(hasUpdate => {
   console.log('是否有更新:', hasUpdate);
 });
 ```
+### 自动构建 `v2.0.0+`
+### Vite
+
+```javascript
+// vite.config.js
+import { VersionCheckPlugin, VersionCheckRules } from 'version-check-js/plugin';
+
+export default {
+  plugins: [
+    new VersionCheckPlugin({
+      output: 'dist/version.json',
+      version: VersionCheckRules.dateTime(),
+      format: 'json',
+    }).vitePlugin(),
+  ],
+};
+```
+
+### Webpack
+
+```javascript
+// webpack.config.js
+const { VersionCheckPlugin, VersionCheckRules } = require('version-check-js/plugin');
+
+module.exports = {
+  plugins: [
+    new VersionCheckPlugin({
+      output: 'dist/version.json',
+      version: VersionCheckRules.dateTime(),
+      format: 'json',
+    }).webpackPlugin(),
+  ],
+};
+```
+
+### Vue CLI
+
+```javascript
+// vue.config.js
+const { VersionCheckPlugin, VersionCheckRules } = require('version-check-js/plugin');
+
+module.exports = {
+  configureWebpack: (config) => {
+    config.plugins.push(
+      new VersionCheckPlugin({
+        output: 'dist/version.json',
+        version: VersionCheckRules.dateTime(),
+        format: 'json',
+      }).vueCLIPlugin()
+    );
+  },
+};
+```
+
 
 ---
 

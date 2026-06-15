@@ -2,27 +2,83 @@
  * 通用前端版本检测工具
  * 自动判断检测模式（ETag/版本文件）| 默认自动轮询 | 保留手动检测 | 内置原生confirm提示
  * @module version-check-js
- * @version 1.1.6
  */
+
+interface StorageApi {
+  get: (key: string) => string | null;
+  set: (key: string, value: string) => boolean;
+}
+
+interface FetchOptions {
+  method?: string;
+  cache?: RequestCache;
+  credentials?: RequestCredentials;
+  headers?: Record<string, string>;
+  [key: string]: any;
+}
+
+interface VersionCheckOptions {
+  /** 检测地址（默认/：ETag 模式；传文件路径如/version.json：版本文件模式） */
+  url?: string;
+  /** 轮询间隔（毫秒），默认 10 分钟 */
+  interval?: number;
+  /** 更新提示文案 */
+  message?: string;
+  /** 自定义更新回调（优先级高于默认 confirm） */
+  onUpdate?: (() => void) | null;
+  /** 错误回调 */
+  onError?: ((err: Error) => void) | null;
+  /** 日志回调 */
+  onLog?: ((message: string) => void) | null;
+  /** 自定义存储配置（get/set 方法） */
+  storage?: StorageApi | null;
+  /** 重新加载时的时间戳参数名，默认't' */
+  t?: string;
+  /** 存储版本标识的key */
+  versionKey?: string;
+  /** 启动时是否立即执行一次检测 */
+  initialCheck?: boolean;
+  /** 是否绑定页面可见性变化监听 */
+  bindVisibility?: boolean;
+  /** 自定义请求函数，优先级高于内部fetch实现 */
+  fetchRequest?: ((url: string, options: FetchOptions) => Promise<any>) | null;
+  /** 自定义fetch选项，优先级高于默认值 */
+  fetchOptions?: FetchOptions;
+}
+
+interface VersionCheckConfig {
+  url: string;
+  interval: number;
+  message: string;
+  onUpdate: (() => void) | null;
+  onError: ((err: Error) => void) | null;
+  onLog: ((message: string) => void) | null;
+  storage: StorageApi | null;
+  t: string;
+  versionKey: string;
+  initialCheck: boolean;
+  bindVisibility: boolean;
+  fetchRequest: ((url: string, options: FetchOptions) => Promise<any>) | null;
+  fetchOptions: FetchOptions;
+}
+
+type CheckMode = 'etag' | 'file';
+
 class VersionCheck {
+  private config: VersionCheckConfig;
+  private timer: ReturnType<typeof setTimeout> | null = null;
+  private memoryStorage: string | null = null;
+  private storageApi: StorageApi;
+  private versionKey: string;
+  private checkMode: CheckMode;
+  private isRunning: boolean = false;
+  private _visibilityHandler: (() => void) | null = null;
+
   /**
    * 构造函数：初始化配置和存储（极简配置）
-   * @param {Object} options 配置项
-   * @param {string} [options.url='/'] 检测地址（默认/：ETag 模式；传文件路径如/version.json：版本文件模式）
-   * @param {number} [options.interval=10 * 60 * 1000] 轮询间隔（毫秒），默认 10 分钟
-   * @param {string} [options.message='检测到新版本，是否立即刷新？'] 更新提示文案
-   * @param {Function} [options.onUpdate=null] 自定义更新回调（优先级高于默认 confirm）
-   * @param {Function} [options.onError=(err)=>console.error(err)] 错误回调
-   * @param {Function} [options.onLog=null] 日志回调
-   * @param {Object} [options.storage=null] 自定义存储配置（get/set 方法）
-   * @param {string} [options.t='t'] 重新加载时的时间戳参数名，默认't'
-   * @param {string} [options.versionKey='version_check_key'] 存储版本标识的key
-   * @param {boolean} [options.initialCheck=true] 启动时是否立即执行一次检测
-   * @param {boolean} [options.bindVisibility=true] 是否绑定页面可见性变化监听
-   * @param {Function} [options.fetchRequest=null] 自定义请求函数，优先级高于内部fetch实现
-   * @param {Object} [options.fetchOptions={}] 自定义fetch选项，优先级高于默认值
+   * @param options 配置项
    */
-  constructor(options = {}) {
+  constructor(options: VersionCheckOptions = {}) {
     // 验证输入参数类型
     if (typeof options !== 'object' || options === null) {
       throw new TypeError('options 必须是对象类型');
@@ -34,35 +90,36 @@ class VersionCheck {
       interval: 10 * 60 * 1000,
       message: '检测到新版本，是否立即刷新？',
       onUpdate: null,
-      onError: err => console.error('VersionCheck 失败：', err),
+      onError: (err: Error) => console.error('VersionCheck 失败：', err),
       onLog: null,
       storage: null,
       t: 't',
       versionKey: 'version_check_key',
       initialCheck: true,
       bindVisibility: true,
+      fetchRequest: null,
+      fetchOptions: {},
       ...options,
     };
 
     // 初始化核心状态
-    this.timer = null; // 轮询定时器
-    this.memoryStorage = null; // 内存存储降级
-    this.storageApi = this._initStorage(); // 存储适配器
-    this.versionKey = this.config.versionKey; // 存储版本标识的key
-    this.checkMode = this._getCheckMode(); // 自动判断检测模式
-    this.isRunning = false; // 检测状态
+    this.memoryStorage = null;
+    this.storageApi = this._initStorage();
+    this.versionKey = this.config.versionKey;
+    this.checkMode = this._getCheckMode();
+    this.isRunning = false;
 
     if (this.config.bindVisibility) {
-      this._bindVisibilityListener(); // 绑定可见性变化监听器
+      this._bindVisibilityListener();
     }
   }
 
   /**
    * 日志输出
    * @private
-   * @param {string} message 日志信息
+   * @param message 日志信息
    */
-  _log(message) {
+  private _log(message: string): void {
     if (typeof this.config.onLog === 'function') {
       this.config.onLog(message);
     }
@@ -72,7 +129,7 @@ class VersionCheck {
    * 绑定页面可见性变化监听器
    * @private
    */
-  _bindVisibilityListener() {
+  private _bindVisibilityListener(): void {
     this._unbindVisibilityListener();
     this._visibilityHandler = this._handleVisibilityChange.bind(this);
     document.addEventListener('visibilitychange', this._visibilityHandler);
@@ -82,7 +139,7 @@ class VersionCheck {
    * 解绑页面可见性变化监听器
    * @private
    */
-  _unbindVisibilityListener() {
+  private _unbindVisibilityListener(): void {
     if (this._visibilityHandler) {
       document.removeEventListener('visibilitychange', this._visibilityHandler);
       this._visibilityHandler = null;
@@ -93,7 +150,7 @@ class VersionCheck {
    * 处理页面可见性变化
    * @private
    */
-  _handleVisibilityChange() {
+  private _handleVisibilityChange(): void {
     if (!this.isRunning) return;
 
     if (document.hidden) {
@@ -107,7 +164,7 @@ class VersionCheck {
    * 暂停检测（页面隐藏时）
    * @private
    */
-  _pauseDetection() {
+  private _pauseDetection(): void {
     this.stop(true);
     this._log('页面隐藏，暂停VersionCheck');
   }
@@ -116,21 +173,20 @@ class VersionCheck {
    * 恢复检测（页面显示时）
    * @private
    */
-  _resumeDetection() {
+  private _resumeDetection(): void {
     this.start();
     this._log('页面显示，恢复VersionCheck');
   }
 
   /**
    * 初始化存储适配器（优先自定义 → localStorage → 内存）
-   * @private
-   * @returns {Object} 存储接口（get/set）
+   * @returns 存储接口（get/set）
    */
-  _initStorage() {
-    const defaultStorage = {
-      get: key => {
+  private _initStorage(): StorageApi {
+    const defaultStorage: StorageApi = {
+      get: (key: string): string | null => {
         if (typeof key !== 'string') {
-          this.config.onError(new Error('存储键必须是字符串'));
+          this.config.onError?.(new Error('存储键必须是字符串'));
           return null;
         }
 
@@ -138,16 +194,16 @@ class VersionCheck {
           if (window.localStorage) {
             return localStorage.getItem(key);
           }
-        } catch (e) {
-          this.config.onError(new Error(`localStorage get 失败: ${e.message}`));
+        } catch (e: any) {
+          this.config.onError?.(new Error(`localStorage get 失败: ${e.message}`));
         }
 
         return this.memoryStorage;
       },
 
-      set: (key, value) => {
+      set: (key: string, value: string): boolean => {
         if (typeof key !== 'string') {
-          this.config.onError(new Error('存储键必须是字符串'));
+          this.config.onError?.(new Error('存储键必须是字符串'));
           return false;
         }
 
@@ -156,8 +212,8 @@ class VersionCheck {
             localStorage.setItem(key, String(value));
             return true;
           }
-        } catch (e) {
-          this.config.onError(new Error(`localStorage set 失败: ${e.message}`));
+        } catch (e: any) {
+          this.config.onError?.(new Error(`localStorage set 失败: ${e.message}`));
         }
 
         this.memoryStorage = String(value);
@@ -171,9 +227,9 @@ class VersionCheck {
   /**
    * 自动判断检测模式
    * @private
-   * @returns {string} 'etag' | 'file'
+   * @returns 'etag' | 'file'
    */
-  _getCheckMode() {
+  private _getCheckMode(): CheckMode {
     const { url } = this.config;
     const isVersionFile = url !== '/' && /\.\w+$/.test(url);
     return isVersionFile ? 'file' : 'etag';
@@ -182,17 +238,17 @@ class VersionCheck {
   /**
    * 简化的网络请求（依赖循环调用机制）
    * @private
-   * @param {string} url 请求地址
-   * @param {Object} options 请求选项
-   * @returns {Promise<Response>} fetch 响应
+   * @param url 请求地址
+   * @param options 请求选项
+   * @returns fetch 响应
    */
-  async _fetchRequest(url, options) {
+  private async _fetchRequest(url: string, options: FetchOptions): Promise<Response> {
     try {
       const response = await fetch(url, options);
 
       // 4xx 错误记录但不重试（客户端错误）
       if (response.status >= 400 && response.status < 500) {
-        this.config.onError(new Error(`客户端错误 HTTP ${response.status}: ${response.statusText}`));
+        this.config.onError?.(new Error(`客户端错误 HTTP ${response.status}: ${response.statusText}`));
         return response;
       }
 
@@ -201,8 +257,8 @@ class VersionCheck {
       }
 
       return response;
-    } catch (error) {
-      this.config.onError(new Error(`网络请求失败: ${error.message}`));
+    } catch (error: any) {
+      this.config.onError?.(new Error(`网络请求失败: ${error.message}`));
       throw error;
     }
   }
@@ -210,19 +266,19 @@ class VersionCheck {
   /**
    * ETag模式检测逻辑
    * @private
-   * @returns {Promise<boolean>} 是否检测到更新
+   * @returns 是否检测到更新
    */
-  async _checkByEtag() {
+  private async _checkByEtag(): Promise<boolean> {
     const { url, fetchRequest, fetchOptions } = this.config;
 
     try {
-      const options = {
+      const options: FetchOptions = {
         method: 'HEAD',
         cache: 'no-cache',
         credentials: 'same-origin',
         ...fetchOptions,
       };
-      let newVersion = null;
+      let newVersion: string | null = null;
       if (typeof fetchRequest === 'function') {
         newVersion = await fetchRequest(url, options);
       } else {
@@ -237,8 +293,8 @@ class VersionCheck {
       }
 
       return this._compareVersion(newVersion);
-    } catch (error) {
-      this.config.onError(error);
+    } catch (error: any) {
+      this.config.onError?.(error);
       return false;
     }
   }
@@ -246,11 +302,11 @@ class VersionCheck {
   /**
    * 版本文件模式检测逻辑
    * @private
-   * @returns {Promise<boolean>} 是否检测到更新
+   * @returns 是否检测到更新
    */
-  async _checkByVersionFile() {
+  private async _checkByVersionFile(): Promise<boolean> {
     const { url, fetchRequest, fetchOptions } = this.config;
-    const options = {
+    const options: FetchOptions = {
       method: 'GET',
       cache: 'no-cache',
       credentials: 'same-origin',
@@ -259,7 +315,7 @@ class VersionCheck {
       },
       ...fetchOptions,
     };
-    let newVersion = null;
+    let newVersion: string | null = null;
     try {
       if (typeof fetchRequest === 'function') {
         newVersion = await fetchRequest(url, options);
@@ -279,8 +335,8 @@ class VersionCheck {
         if (!newVersion) throw new Error('版本文件格式错误，缺少 version 字段');
       }
       return this._compareVersion(newVersion);
-    } catch (error) {
-      this.config.onError(error);
+    } catch (error: any) {
+      this.config.onError?.(error);
       return false;
     }
   }
@@ -288,10 +344,11 @@ class VersionCheck {
   /**
    * 对比版本标识
    * @private
-   * @param {string} newVersion 最新版本标识
-   * @returns {boolean} 是否检测到更新
+   * @param newVersion 最新版本标识
+   * @returns 是否检测到更新
    */
-  _compareVersion(newVersion) {
+  private _compareVersion(newVersion: string | null): boolean {
+    if (!newVersion) return false;
     const oldVersion = this.storageApi.get(this.versionKey);
 
     if (!oldVersion) {
@@ -309,7 +366,8 @@ class VersionCheck {
    * 触发更新回调
    * @private
    */
-  _triggerUpdate(newVersion) {
+  private _triggerUpdate(newVersion: string | null): void {
+    if (!newVersion) return;
     const { onUpdate, message } = this.config;
 
     if (typeof onUpdate === 'function') {
@@ -334,7 +392,7 @@ class VersionCheck {
   /**
    * 重新加载页面（避免缓存）
    */
-  reload() {
+  reload(): void {
     let currentUrl = window.location.href;
     const param = this.config.t;
     currentUrl = currentUrl.replace(new RegExp(`[?&]${param}=\\d+`, 'g'), '');
@@ -345,17 +403,17 @@ class VersionCheck {
 
   /**
    * 手动触发单次检测
-   * @param {boolean} isInternal 是否为内部调用
-   * @returns {Promise<boolean>} 是否检测到更新
+   * @param isInternal 是否为内部调用
+   * @returns 是否检测到更新
    */
-  async check(isInternal = false) {
+  async check(isInternal: boolean = false): Promise<boolean> {
     this._log(`开始执行${isInternal ? '检测' : '手动检测'}，模式: ${this.checkMode}`);
 
     try {
       const hasUpdate = this.checkMode === 'etag' ? await this._checkByEtag() : await this._checkByVersionFile();
       this._log(`${isInternal ? '检测' : '手动检测'}完成，检测到更新状态: ${hasUpdate}`);
       return hasUpdate;
-    } catch (error) {
+    } catch (error: any) {
       this._log(`${isInternal ? '检测' : '手动检测'}失败: ${error.message}`);
       throw error;
     }
@@ -364,7 +422,7 @@ class VersionCheck {
   /**
    * 启动自动轮询检测
    */
-  start() {
+  start(): void {
     if (this.isRunning && this.timer) {
       this._log('VersionCheck已在运行中');
       return;
@@ -377,8 +435,8 @@ class VersionCheck {
     const poll = async () => {
       try {
         await this.check(true);
-      } catch (error) {
-        this.config.onError(new Error(`轮询检测失败: ${error.message}`));
+      } catch (error: any) {
+        this.config.onError?.(new Error(`轮询检测失败: ${error.message}`));
       }
       if (this.isRunning && this.timer) {
         this.timer = setTimeout(poll, this.config.interval);
@@ -396,9 +454,9 @@ class VersionCheck {
 
   /**
    * 停止自动轮询检测
-   * @param {boolean} isInternal 是否为内部调用。用来区分是外部停止还是页面隐藏时停止的
+   * @param isInternal 是否为内部调用。用来区分是外部停止还是页面隐藏时停止的
    */
-  stop(isInternal = false) {
+  stop(isInternal: boolean = false): void {
     this._clearTimer();
 
     if (!isInternal) {
@@ -411,7 +469,7 @@ class VersionCheck {
    * 清理定时器
    * @private
    */
-  _clearTimer() {
+  private _clearTimer(): void {
     if (this.timer) {
       clearTimeout(this.timer);
       this.timer = null;
@@ -421,16 +479,16 @@ class VersionCheck {
   /**
    * 销毁实例
    */
-  destroy() {
+  destroy(): void {
     this.stop();
     this._unbindVisibilityListener();
     this.memoryStorage = null;
     this.timer = null;
-    this.storageApi = null;
-    this.checkMode = null;
+    this.storageApi = null as any;
+    this.checkMode = null as any;
     this.isRunning = false;
     this._log('VersionCheck实例已销毁');
-    this.config = null;
+    this.config = null as any;
   }
 }
 
