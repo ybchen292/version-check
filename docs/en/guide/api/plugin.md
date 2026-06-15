@@ -2,12 +2,6 @@
 
 `VersionCheckPlugin` is a build plugin for automatically generating version files, supporting Vite, Webpack, and Vue CLI.<Badge  text="v2.0.0+" />
 
-## Installation
-
-```bash
-npm install version-check-js
-```
-
 ## Basic Usage
 
 ### Vite

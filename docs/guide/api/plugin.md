@@ -2,12 +2,6 @@
 
 `VersionCheckPlugin` 是一个用于自动生成版本文件的构建插件，支持 Vite、Webpack 和 Vue CLI。<Badge  text="v2.0.0+" />
 
-## 安装
-
-```bash
-npm install version-check-js
-```
-
 ## 基本用法
 
 ### Vite

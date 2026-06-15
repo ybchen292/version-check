@@ -52,7 +52,7 @@ const versionCheck = new VersionCheck({
 | 参数           | 类型     | 默认值                       | 描述                                                                                                             |
 | -------------- | -------- | ---------------------------- | ---------------------------------------------------------------------------------------------------------------- |
 | url            | string   | /                            | 检测地址（默认/：ETag 模式；传文件路径如/version.json：版本文件模式。如vue中放在public目录下，需要传/version.json。也可以传入接口地址，通过get请求或者自定义请求(fetchRequest)获取版本号）                                           |
-| interval       | number   | 10 _ 60 _ 1000               | 轮询间隔（毫秒），默认 10 分钟                                                                                   |
+| interval       | number   | `10 * 60 * 1000`               | 轮询间隔（毫秒），默认 10 分钟                                                                                   |
 | message        | string   | 检测到新版本，是否立即刷新？ | 更新提示文案                                                                                                     |
 | onUpdate       | Function | null                         | 自定义更新回调（优先级高于默认 confirm。传入后message无效。当需要自定义弹框提示或无需弹框提示时需要用的此方法）                                                                                             |
 | onError        | Function | (err)=>console.error(err)    | 错误回调                                                                                                         |
