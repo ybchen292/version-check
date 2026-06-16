@@ -135,7 +135,7 @@ module.exports = {
         output: 'dist/version.json',
         version: VersionCheckRules.dateTime(),
         format: 'json',
-      }).vueCLIPlugin()
+      }).webpackPlugin()
     );
   },
 };
