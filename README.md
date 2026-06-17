@@ -3,6 +3,7 @@
 > 一个轻量级的前端版本检测工具，支持自动轮询检测、手动检测、ETag 模式和版本文件模式，内置原生提示弹窗。支持自定义提示和回调函数。适用于任何基于 HTML 的前端项目。
 
 [English](./README.en.md) | [Gitee](https://gitee.com/ybchen292/version-check) | [GitHub](https://github.com/ybchen292/version-check)
+|[文档](https://ybchen292.github.io/version-check/)
 
 ---
 
@@ -87,7 +88,9 @@ versionCheck.check().then(hasUpdate => {
   console.log('是否有更新:', hasUpdate);
 });
 ```
+
 ### 自动构建 `v2.0.0+`
+
 ### Vite
 
 ```javascript
@@ -129,38 +132,37 @@ module.exports = {
 const { VersionCheckPlugin, VersionCheckRules } = require('version-check-js/plugin');
 
 module.exports = {
-  configureWebpack: (config) => {
+  configureWebpack: config => {
     config.plugins.push(
       new VersionCheckPlugin({
         output: 'dist/version.json',
         version: VersionCheckRules.dateTime(),
         format: 'json',
-      }).webpackPlugin()
+      }).webpackPlugin(),
     );
   },
 };
 ```
 
-
 ---
 
 ## ⚙️ 配置项详解
 
-| 参数名         | 类型     | 默认值                                        | 描述                                                                                                             |
-| -------------- | -------- | --------------------------------------------- | ---------------------------------------------------------------------------------------------------------------- |
-| url            | string   | /                                             | 检测地址（默认/：ETag 模式；传文件路径如/version.json：版本文件模式。如vue中放在public目录下，需要传/version.json。也可以传入接口地址，通过get请求或者自定义请求(fetchRequest)获取版本号）                 |
-| interval       | number   | `10 * 60 * 1000`（10 分钟）                   | 轮询检测间隔时间（毫秒），建议不小于 30 秒                                                                       |
-| message        | string   | 检测到新版本，是否立即刷新？                  | 更新提示文案，仅在未设置 `onUpdate` 时生效                                                                       |
-| onUpdate       | Function | null                                          | 自定义更新回调（优先级高于默认 confirm。传入后message无效。当需要自定义弹框提示或无需弹框提示时需要用的此方法）                                                                |
-| onError        | Function | (err) => console.error('版本检测失败：', err) | 错误回调函数，接收错误对象作为参数                                                                               |
-| onLog          | Function | null                                          | 操作日志回调函数，用于记录正常操作信息                                                                           |
-| storage        | Object   | null                                          | 自定义存储配置（需提供 `get`、`set` 方法），默认使用 localStorage                                                |
-| t              | string   | t                                             | 重新加载时的时间戳参数名                                                                                         |
-| versionKey     | string   | version_check_key                             | 用于在 `localStorage` 中缓存版本标识的键名                                                                       |
-| initialCheck   | boolean  | true                                          | 是否在执行start方法时立即执行一次版本比对，而非等待首个轮询间隔(为true时,页面可见性变化显示时会执行一次版本检测) |
-| bindVisibility | boolean  | true                                          | 是否自动监听页面可见性变化：页面隐藏时暂停轮询，显示时自动恢复，节省性能与网络开销                               |
-| fetchRequest          | Function | null                         | 自定义请求函数，优先级高于内部fetch实现(需要返回Promise对象。返回值为版本号)                                                                                             |
-| fetchOptions        | Object   | {}                           | 自定义fetch选项，优先级高于默认值（当通过接口请求url时需要传入token时可在此处传入。或者使用其他自定义header时可在此处传入。也可以使用fetchRequest）                                                                                             |
+| 参数名         | 类型     | 默认值                                        | 描述                                                                                                                                                                                       |
+| -------------- | -------- | --------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| url            | string   | /                                             | 检测地址（默认/：ETag 模式；传文件路径如/version.json：版本文件模式。如vue中放在public目录下，需要传/version.json。也可以传入接口地址，通过get请求或者自定义请求(fetchRequest)获取版本号） |
+| interval       | number   | `10 * 60 * 1000`（10 分钟）                   | 轮询检测间隔时间（毫秒），建议不小于 30 秒                                                                                                                                                 |
+| message        | string   | 检测到新版本，是否立即刷新？                  | 更新提示文案，仅在未设置 `onUpdate` 时生效                                                                                                                                                 |
+| onUpdate       | Function | null                                          | 自定义更新回调（优先级高于默认 confirm。传入后message无效。当需要自定义弹框提示或无需弹框提示时需要用的此方法）                                                                            |
+| onError        | Function | (err) => console.error('版本检测失败：', err) | 错误回调函数，接收错误对象作为参数                                                                                                                                                         |
+| onLog          | Function | null                                          | 操作日志回调函数，用于记录正常操作信息                                                                                                                                                     |
+| storage        | Object   | null                                          | 自定义存储配置（需提供 `get`、`set` 方法），默认使用 localStorage                                                                                                                          |
+| t              | string   | t                                             | 重新加载时的时间戳参数名                                                                                                                                                                   |
+| versionKey     | string   | version_check_key                             | 用于在 `localStorage` 中缓存版本标识的键名                                                                                                                                                 |
+| initialCheck   | boolean  | true                                          | 是否在执行start方法时立即执行一次版本比对，而非等待首个轮询间隔(为true时,页面可见性变化显示时会执行一次版本检测)                                                                           |
+| bindVisibility | boolean  | true                                          | 是否自动监听页面可见性变化：页面隐藏时暂停轮询，显示时自动恢复，节省性能与网络开销                                                                                                         |
+| fetchRequest   | Function | null                                          | 自定义请求函数，优先级高于内部fetch实现(需要返回Promise对象。返回值为版本号)                                                                                                               |
+| fetchOptions   | Object   | {}                                            | 自定义fetch选项，优先级高于默认值（当通过接口请求url时需要传入token时可在此处传入。或者使用其他自定义header时可在此处传入。也可以使用fetchRequest）                                        |
 
 ### 配置项最佳实践
 

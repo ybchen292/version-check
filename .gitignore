@@ -23,3 +23,6 @@ docs/.vitepress/cache/
 docs/.vitepress/dist/
 
 examples/**/dist/
+
+.trae/
+.lingma/

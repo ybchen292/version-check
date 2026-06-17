@@ -1,6 +1,6 @@
 {
   "name": "version-check-js",
-  "version": "2.0.1",
+  "version": "2.0.2",
   "description": "version-check-js极简配置的前端版本检测工具，自动判断ETag/版本文件模式，默认自动轮询，保留手动检测 。原生javascript实现。不局限于框架使用",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
@@ -44,7 +44,7 @@
     "type": "git",
     "url": "https://github.com/ybchen292/version-check"
   },
-  "homepage": "https://github.com/ybchen292/version-check",
+  "homepage": "https://ybchen292.github.io/version-check/",
   "devDependencies": {
     "@rollup/plugin-commonjs": "^25.0.0",
     "@rollup/plugin-node-resolve": "^15.0.0",
